@@ -1,0 +1,26 @@
+# on:
+#     push:
+#       branches:
+#         - main
+#   jobs:
+#     build:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - name: Checkout code
+#           uses: actions/checkout@v3
+#         - name: Set up JFrog CLI
+#           run: |
+#             curl -fL https://getcli.jfrog.io | sh
+#             sudo mv jfrog /usr/local/bin
+#         - name: Configure JFrog CLI
+#           run: |
+#             jfrog rt config --interactive=false \
+#               --url=${{ secrets.JFROG_URL }} \
+#               --user=${{ secrets.JFROG_USER }} \
+#               --apikey=${{ secrets.JFROG_API_KEY }}
+#         - name: Build Project
+#           run: |
+#             mvn clean package
+#         - name: Upload Artifacts
+#           run: |
+#             jfrog rt upload "target/*.jar" my-repo/libs-release-local/
