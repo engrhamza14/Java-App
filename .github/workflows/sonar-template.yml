@@ -44,8 +44,7 @@ jobs:
 
       # Build and Analyze with SonarQube
       - name: Build and analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass PR info
+        env: 
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # SonarQube token
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}  # SonarQube host URL
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
