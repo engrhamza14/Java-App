@@ -1,16 +1,24 @@
-name: Spring Boot Build and Upload
+name: Build and Pull Artifact from Artifactory
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      jfrog-url:
+        required: true
+        type: string
+      jfrog-user:
+        required: true
+        type: string
+      jfrog-apikey:
+        required: true
+        type: string
 
 jobs:
-  build_and_upload:
-    name: Build, Verify, and Upload
+  build:
+    name: Build and Pull Artifact
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the code
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -47,15 +55,11 @@ jobs:
 
       # Step 7: Configure JFrog CLI
       - name: Configure JFrog CLI
-        env:
-          JFROG_URL: ${{ secrets.JFROG_URL }}
-          JFROG_USER: ${{ secrets.JFROG_USER }}
-          JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
         run: |
           jfrog config add my-server \
-            --artifactory-url=$JFROG_URL \
-            --user=$JFROG_USER \
-            --apikey=$JFROG_API_KEY \
+            --artifactory-url=${{ inputs.jfrog-url }} \
+            --user=${{ inputs.jfrog-user }} \
+            --apikey=${{ inputs.jfrog-apikey }} \
             --interactive=false
 
       # Step 8: Verify JFrog CLI Configuration
@@ -63,8 +67,15 @@ jobs:
         run: |
           jfrog config show
 
-      # Step 9: Upload the build artifact to JFrog Artifactory
-      - name: Upload Artifacts to Artifactory
+      # Step 9: Pull the artifact from Artifactory
+      - name: Pull Artifact from Artifactory
         run: |
-          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ \
+          jfrog rt download "my-repo/libs-release-local/*.jar" ./downloaded-artifacts/ \
             --server-id=my-server
+
+      # Step 10: Verify Pulled Artifacts
+      - name: Verify Pulled Artifacts
+        run: |
+          echo "Verifying that the JAR file was downloaded..."
+          ls -l ./downloaded-artifacts/*.jar || (echo "No JAR file found!" && exit 1)
+

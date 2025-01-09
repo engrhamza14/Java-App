@@ -1,26 +1,40 @@
+# name: Build and Deploy to Artifactory
 # on:
-#     push:
-#       branches:
-#         - main
-#   jobs:
-#     build:
-#       runs-on: ubuntu-latest
-#       steps:
-#         - name: Checkout code
-#           uses: actions/checkout@v3
-#         - name: Set up JFrog CLI
-#           run: |
-#             curl -fL https://getcli.jfrog.io | sh
-#             sudo mv jfrog /usr/local/bin
-#         - name: Configure JFrog CLI
-#           run: |
-#             jfrog rt config --interactive=false \
-#               --url=${{ secrets.JFROG_URL }} \
-#               --user=${{ secrets.JFROG_USER }} \
-#               --apikey=${{ secrets.JFROG_API_KEY }}
-#         - name: Build Project
-#           run: |
-#             mvn clean package
-#         - name: Upload Artifacts
-#           run: |
-#             jfrog rt upload "target/*.jar" my-repo/libs-release-local/
+#   workflow_call:
+#     inputs:
+#       jfrog-url:
+#         required: true
+#         type: string
+#       jfrog-user:
+#         required: true
+#         type: string
+#       jfrog-apikey:
+#         required: true
+#         type: string
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#       - name: Set up JFrog CLI
+#         run: |
+#           curl -fL https://getcli.jfrog.io | sh
+#           sudo mv jfrog /usr/local/bin
+#       - name: Configure JFrog CLI
+#         run: |
+#           jfrog config add my-server \
+#             --artifactory-url=${{ inputs.jfrog-url }} \
+#             --user=${{ inputs.jfrog-user }} \
+#             --apikey=${{ inputs.jfrog-apikey }} \
+#             --interactive=false
+#       - name: Verify JFrog CLI Configuration
+#         run: |
+#           jfrog config show
+#       - name: Build Project
+#         run: |
+#           mvn clean install && mvn clean package
+#       - name: Upload Artifacts to Artifactory
+#         run: |
+#           jfrog rt upload "target/*.jar" my-repo/libs-release-local/ \
+#             --server-id=my-server
