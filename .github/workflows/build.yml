@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build and Analyze
+  build_and_upload:
+    name: Build, Verify, and Upload
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout the code
@@ -39,30 +39,13 @@ jobs:
           echo "Verifying that the JAR file was created..."
           ls -l target/*.jar || (echo "No JAR file found!" && exit 1)
 
-      # # Step 6: Analyze with SonarQube
-      # - name: Build and Analyze with SonarQube
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      #   run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=engrhamza14_Java-App_AZRHhNgoUOlHtB53LqEQ
-
-  upload_artifact:
-    name: Upload Artifact to JFrog Artifactory
-    runs-on: ubuntu-latest
-    needs: build  # Ensures upload_artifact runs after the build job
-    steps:
-      # Step 1: Checkout the code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Set up JFrog CLI
+      # Step 6: Set up JFrog CLI
       - name: Set up JFrog CLI
         run: |
           curl -fL https://getcli.jfrog.io | sh
           sudo mv jfrog /usr/local/bin
 
-      # Step 3: Configure JFrog CLI
+      # Step 7: Configure JFrog CLI
       - name: Configure JFrog CLI
         env:
           JFROG_URL: ${{ secrets.JFROG_URL }}
@@ -75,15 +58,13 @@ jobs:
             --apikey=$JFROG_API_KEY \
             --interactive=false
 
-      # Step 4: Verify JFrog CLI Configuration
+      # Step 8: Verify JFrog CLI Configuration
       - name: Verify JFrog CLI Configuration
         run: |
           jfrog config show
 
-      # Step 5: Upload the build artifact to JFrog Artifactory
+      # Step 9: Upload the build artifact to JFrog Artifactory
       - name: Upload Artifacts to Artifactory
         run: |
           jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ \
             --server-id=my-server
-
-
