@@ -1,6 +1,7 @@
 name: Reusable CI for Spring Boot
+
 on:
-  workflow_call: # Makes the workflow reusable
+  workflow_call: # Makes this workflow reusable
     inputs:
       java-version:
         required: true
@@ -8,17 +9,20 @@ on:
       build-command:
         required: true
         type: string
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+    
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
         java-version: ${{ inputs.java-version }}
         distribution: temurin
+    
     - name: Cache Maven dependencies
       uses: actions/cache@v3
       with:
@@ -26,5 +30,6 @@ jobs:
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
+    
     - name: Build with Maven
       run: ${{ inputs.build-command }}
