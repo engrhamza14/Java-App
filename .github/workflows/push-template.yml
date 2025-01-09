@@ -2,13 +2,13 @@ name: Build and Deploy to Artifactory
 on:
   workflow_call:
     inputs:
-      jfrog-url:
+      JFROG_URL:
         required: true
         type: string
-      jfrog-user:
+      JFROG_USER:
         required: true
         type: string
-      jfrog-apikey:
+      JFROG-APIKEY:
         required: true
         type: string
 jobs:

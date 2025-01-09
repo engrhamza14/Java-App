@@ -2,7 +2,7 @@ name: Deploy to EC2 and Run Spring Boot Project
 on:
   workflow_call:
     inputs:
-      EC2_IP:
+      EC2_PUBLIC_DNS:
         description: 'EC2 IP address'
         required: true
         type: string
@@ -18,7 +18,7 @@ on:
         description: 'JFrog API Key'
         required: true
         type: string
-      EC2_SSH_KEY:
+      EC2_PRIVATE_KEY:
         description: 'SSH private key for EC2'
         required: true
         type: string
