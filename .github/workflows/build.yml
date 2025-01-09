@@ -17,18 +17,18 @@ jobs:
       
       # Call the build-template.yml reusable workflow
       - name: Build Spring Boot Application
-        uses: ./.github/workflows/build-template.yml
+        uses: ./.github/workflows/templates/build-template.yml
         with:
           java-version: '17'
           build-command: 'mvn clean install && mvn clean package'  # Modify as needed
 
       # Run SonarQube Analysis
       - name: SonarQube Analysis
-        uses: ./.github/workflows/sonar-template.yml
+        uses: ./.github/workflows/templates/sonar-template.yml
 
       # Push artifact to Artifactory
       - name: Push to Artifactory
-        uses: ./.github/workflows/push-template.yml
+        uses: ./.github/workflows/templates/push-template.yml
         with:
           jfrog-url: ${{ secrets.JFROG_URL }}
           jfrog-user: ${{ secrets.JFROG_USER }}
@@ -40,7 +40,7 @@ jobs:
     steps:
       # Deploy to EC2
       - name: Deploy to EC2 and Run Spring Boot Application
-        uses: ./.github/workflows/deploy-template.yml
+        uses: ./.github/workflows/templates/deploy-template.yml
         with:
           EC2_IP: ${{ secrets.EC2_PUBLIC_DNS }}  # EC2 IP address
           JFROG_URL: ${{ secrets.JFROG_URL }}
