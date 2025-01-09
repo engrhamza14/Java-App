@@ -33,4 +33,3 @@ jobs:
             # Run the Spring Boot application
             nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
         
-            
