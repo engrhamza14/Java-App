@@ -26,4 +26,4 @@ jobs:
           mvn clean install && mvn clean package
       - name: Upload Artifacts to Artifactory
         run: |
-          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ --url=http://18.208.222.156:8081/ --user=admin --password=your-password
+          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ --url=http://18.208.222.156:8081/artifactory --user=admin --password=your-password
