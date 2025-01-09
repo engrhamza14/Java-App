@@ -86,3 +86,5 @@ jobs:
           jfrog rt upload "target/*.jar" my-repo/libs-release-local/ \
             --server-id=my-server
 
+
+            
