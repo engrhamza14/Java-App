@@ -40,3 +40,4 @@ jobs:
       JFROG_USER: ${{ secrets.JFROG_USER }}
       JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
       EC2_SSH_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+      
