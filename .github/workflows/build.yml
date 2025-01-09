@@ -1,69 +1,76 @@
-# name: Spring Boot Build
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v3
-
-#       - name: Set up JDK
-#         uses: actions/setup-java@v3
-#         with:
-#           distribution: 'temurin'
-#           java-version: '11'
-
-#       - name: Build with Maven
-#         run: mvn clean install && mvn clean package
-
-#       - name: Verify Build Output
-#         run: |
-#           echo "Verifying that the JAR file was created..."
-#           ls -l target/*.jar || (echo "No JAR file found!" && exit 1)
-
-
-
-name: Build
+name: Spring Boot Build and Upload
 
 on:
   push:
     branches:
       - main
 
-
 jobs:
   build:
-    name: Build
+    name: Build and Analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up JDK 11
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: Cache SonarQube packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+          distribution: 'temurin'
+          java-version: '11'
+
+      # Step 3: Cache Maven dependencies
       - name: Cache Maven packages
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build and analyze
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=engrhamza14_Java-App_AZRHhNgoUOlHtB53LqEQ
+
+      # Step 4: Build with Maven
+      - name: Build with Maven
+        run: mvn clean install package
+
+      # Step 5: Verify Build Output
+      - name: Verify Build Output
+        run: |
+          echo "Verifying that the JAR file was created..."
+          ls -l target/*.jar || (echo "No JAR file found!" && exit 1)
+
+      # # Step 6: Analyze with SonarQube
+      # - name: Build and Analyze with SonarQube
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      #   run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=engrhamza14_Java-App_AZRHhNgoUOlHtB53LqEQ
+
+  upload_artifact:
+    name: Upload Artifact to JFrog Artifactory
+    runs-on: ubuntu-latest
+    needs: build  # This ensures upload_artifact runs after the build job
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up JFrog CLI
+      - name: Set up JFrog CLI
+        run: |
+          curl -fL https://getcli.jfrog.io | sh
+          sudo mv jfrog /usr/local/bin
+
+      # Step 3: Configure JFrog CLI
+      - name: Configure JFrog CLI
+        run: |
+          jfrog rt config --interactive=false \
+            --url=${{ secrets.JFROG_URL }} \
+            --user=${{ secrets.JFROG_USER }} \
+            --apikey=${{ secrets.JFROG_API_KEY }}
+
+      # Step 4: Upload the build artifact to JFrog Artifactory
+      - name: Upload Artifacts
+        run: |
+          jfrog rt upload "target/*.jar" my-repo/libs-release-local/
