@@ -1,55 +1,55 @@
-name: Deploy to EC2 and Run Spring Boot Project
-on:
-  workflow_call:
-    inputs:
-      EC2_IP:
-        description: 'EC2 IP address'
-        required: true
-        type: string
-      JFROG_URL:
-        description: 'JFrog Artifactory URL'
-        required: true
-        type: string
-      JFROG_USER:
-        description: 'JFrog Username'
-        required: true
-        type: string
-      JFROG_API_KEY:
-        description: 'JFrog API Key'
-        required: true
-        type: string
-      EC2_SSH_KEY:
-        description: 'SSH private key for EC2'
-        required: true
-        type: string
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      # Use SSH action to deploy to EC2 and run commands on EC2
-      - name: SSH into EC2 and configure JFrog CLI (if not already configured)
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ inputs.EC2_PUBLIC_DNS }}
-          username: ubuntu
-          key: ${{ inputs.EC2_PRIVATE_KEY }}
-          port: 22
-          script: |
-            # Check if JFrog CLI is configured by looking for the config file
-            if [ ! -f ~/.jfrog/jfrog-cli.conf ]; then
-              # Install JFrog CLI on EC2
-              curl -fL https://getcli.jfrog.io | sh
-              sudo mv jfrog /usr/local/bin
-              # Configure JFrog CLI with your Artifactory credentials
-              jfrog config add my-server \
-                --artifactory-url=${{ inputs.JFROG_URL }} \
-                --user=${{ inputs.JFROG_USER }} \
-                --apikey=${{ inputs.JFROG_API_KEY }} \
-                --interactive=false
-            else
-              echo "JFrog CLI is already configured."
-            fi
-            # Download the artifact directly on EC2
-            jfrog rt download "my-repo/libs-release-local/*.jar" /home/ubuntu/
-            # Run the Spring Boot application
-            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
+# name: Deploy to EC2 and Run Spring Boot Project
+# on:
+#   workflow_call:
+#     inputs:
+#       EC2_IP:
+#         description: 'EC2 IP address'
+#         required: true
+#         type: string
+#       JFROG_URL:
+#         description: 'JFrog Artifactory URL'
+#         required: true
+#         type: string
+#       JFROG_USER:
+#         description: 'JFrog Username'
+#         required: true
+#         type: string
+#       JFROG_API_KEY:
+#         description: 'JFrog API Key'
+#         required: true
+#         type: string
+#       EC2_SSH_KEY:
+#         description: 'SSH private key for EC2'
+#         required: true
+#         type: string
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       # Use SSH action to deploy to EC2 and run commands on EC2
+#       - name: SSH into EC2 and configure JFrog CLI (if not already configured)
+#         uses: appleboy/ssh-action@v0.1.6
+#         with:
+#           host: ${{ inputs.EC2_PUBLIC_DNS }}
+#           username: ubuntu
+#           key: ${{ inputs.EC2_PRIVATE_KEY }}
+#           port: 22
+#           script: |
+#             # Check if JFrog CLI is configured by looking for the config file
+#             if [ ! -f ~/.jfrog/jfrog-cli.conf ]; then
+#               # Install JFrog CLI on EC2
+#               curl -fL https://getcli.jfrog.io | sh
+#               sudo mv jfrog /usr/local/bin
+#               # Configure JFrog CLI with your Artifactory credentials
+#               jfrog config add my-server \
+#                 --artifactory-url=${{ inputs.JFROG_URL }} \
+#                 --user=${{ inputs.JFROG_USER }} \
+#                 --apikey=${{ inputs.JFROG_API_KEY }} \
+#                 --interactive=false
+#             else
+#               echo "JFrog CLI is already configured."
+#             fi
+#             # Download the artifact directly on EC2
+#             jfrog rt download "my-repo/libs-release-local/*.jar" /home/ubuntu/
+#             # Run the Spring Boot application
+#             nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &

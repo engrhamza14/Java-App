@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     # Call the reusable build workflow
-    uses: ./.github/workflows/templates/build-template.yml
+    uses: ./.github/workflows/build-template.yml
     with:
       java-version: '17'
       build-command: 'mvn clean install && mvn clean package'
@@ -19,12 +19,12 @@ jobs:
   sonar:
     # Call the reusable SonarQube workflow
     needs: build  # Ensure the build job completes first
-    uses: ./.github/workflows/templates/sonar-template.yml
+    uses: ./.github/workflows/sonar-template.yml
 
   push_to_artifactory:
     # Call the reusable push-to-artifactory workflow
     needs: [build, sonar]  # Ensure build and sonar jobs complete first
-    uses: ./.github/workflows/templates/push-template.yml
+    uses: ./.github/workflows/push-template.yml
     with:
       jfrog-url: ${{ secrets.JFROG_URL }}
       jfrog-user: ${{ secrets.JFROG_USER }}
@@ -33,7 +33,7 @@ jobs:
   deploy:
     # Call the reusable deploy workflow
     needs: push_to_artifactory  # Ensure push_to_artifactory job completes first
-    uses: ./.github/workflows/templates/deploy-template.yml
+    uses: ./.github/workflows/deploy-template.yml
     with:
       EC2_IP: ${{ secrets.EC2_PUBLIC_DNS }}
       JFROG_URL: ${{ secrets.JFROG_URL }}
