@@ -83,8 +83,7 @@ jobs:
       # Step 5: Upload the build artifact to JFrog Artifactory
       - name: Upload Artifacts to Artifactory
         run: |
-          jfrog rt upload "target/*.jar" my-repo/libs-release-local/ \
+          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ \
             --server-id=my-server
 
 
-            
