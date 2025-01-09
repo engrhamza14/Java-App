@@ -14,9 +14,9 @@ jobs:
       - name: Configure JFrog CLI
         run: |
           jfrog config add my-server \
-            --artifactory-url=${{ inputs.JFROG_URL }} \
-            --user=${{ inputs.JFROG_USER }} \
-            --apikey=${{ inputs.JFROG-APIKEY }} \
+            --artifactory-url=${{ secrets.JFROG_URL }} \
+            --user=${{ secrets.JFROG_USER }} \
+            --apikey=${{ secrets.JFROG-APIKEY }} \
             --interactive=false
       - name: Verify JFrog CLI Configuration
         run: |
