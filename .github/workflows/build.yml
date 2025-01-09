@@ -43,9 +43,9 @@ jobs:
       - name: SSH into EC2 and configure JFrog CLI
         uses: appleboy/ssh-action@v0.1.6
         with:
-          host: ${{ secrets.EC2_IP }}
+          host: ${{ secrets.EC2_PUBLIC_DNS }}
           username: ubuntu
-          key: ${{ secrets.EC2_PUBLIC_DNS }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: 22
           script: |
             # Install JFrog CLI on EC2
@@ -58,6 +58,6 @@ jobs:
               --apikey=${{ secrets.JFROG_API_KEY }} \
               --interactive=false
             # Download the artifact directly on EC2
-            jfrog rt download "my-repo/libs-release-local/*.jar" /home/ubuntu/
+            jfrog rt download "artifactory-repo/libs-release-local/*.jar" /home/ubuntu/
             # Run the Spring Boot application
-            nohup java -jar /home/ubuntu/springboot-test-0.0.1-SNAPSHOT.jar &
+            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
