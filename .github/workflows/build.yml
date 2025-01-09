@@ -1,4 +1,5 @@
 name: Main Build and Deploy Workflow
+
 on:
   push:
     branches:
@@ -9,41 +10,33 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      # Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      # Call the build-template.yml reusable workflow
-      - name: Build Spring Boot Application
-        uses: ./.github/workflows/templates/build-template.yml
-        with:
-          java-version: '17'
-          build-command: 'mvn clean install && mvn clean package'  # Modify as needed
+    # Call the reusable build workflow
+    uses: ./.github/workflows/templates/build-template.yml
+    with:
+      java-version: '17'
+      build-command: 'mvn clean install && mvn clean package'
 
-      # Run SonarQube Analysis
-      - name: SonarQube Analysis
-        uses: ./.github/workflows/templates/sonar-template.yml
+  sonar:
+    # Call the reusable SonarQube workflow
+    needs: build  # Ensure the build job completes first
+    uses: ./.github/workflows/templates/sonar-template.yml
 
-      # Push artifact to Artifactory
-      - name: Push to Artifactory
-        uses: ./.github/workflows/templates/push-template.yml
-        with:
-          jfrog-url: ${{ secrets.JFROG_URL }}
-          jfrog-user: ${{ secrets.JFROG_USER }}
-          jfrog-apikey: ${{ secrets.JFROG_API_KEY }}
+  push_to_artifactory:
+    # Call the reusable push-to-artifactory workflow
+    needs: [build, sonar]  # Ensure build and sonar jobs complete first
+    uses: ./.github/workflows/templates/push-template.yml
+    with:
+      jfrog-url: ${{ secrets.JFROG_URL }}
+      jfrog-user: ${{ secrets.JFROG_USER }}
+      jfrog-apikey: ${{ secrets.JFROG_API_KEY }}
 
   deploy:
-    needs: build  # Ensure the build job is completed before deployment
-    runs-on: ubuntu-latest
-    steps:
-      # Deploy to EC2
-      - name: Deploy to EC2 and Run Spring Boot Application
-        uses: ./.github/workflows/templates/deploy-template.yml
-        with:
-          EC2_IP: ${{ secrets.EC2_PUBLIC_DNS }}  # EC2 IP address
-          JFROG_URL: ${{ secrets.JFROG_URL }}
-          JFROG_USER: ${{ secrets.JFROG_USER }}
-          JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
-          EC2_SSH_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+    # Call the reusable deploy workflow
+    needs: push_to_artifactory  # Ensure push_to_artifactory job completes first
+    uses: ./.github/workflows/templates/deploy-template.yml
+    with:
+      EC2_IP: ${{ secrets.EC2_PUBLIC_DNS }}
+      JFROG_URL: ${{ secrets.JFROG_URL }}
+      JFROG_USER: ${{ secrets.JFROG_USER }}
+      JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
+      EC2_SSH_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
