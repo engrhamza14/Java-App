@@ -1,63 +1,49 @@
-name: Spring Boot Build, Upload, and Deploy
-
+name: Main Build and Deploy Workflow
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build_upload_pull_deploy:
-    name: Build, Verify, Upload, Pull, and Deploy to EC2
+  build:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the code
+      # Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # Step 2: Set up JDK 11
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      
+      # Call the build-template.yml reusable workflow
+      - name: Build Spring Boot Application
+        uses: ./.github/workflows/build-template.yml
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
+          build-command: 'mvn clean install && mvn clean package'  # Modify as needed
 
-      # Step 3: Cache Maven dependencies
-      - name: Cache Maven packages
-        uses: actions/cache@v2
+      # Run SonarQube Analysis
+      - name: SonarQube Analysis
+        uses: ./.github/workflows/sonar-template.yml
+
+      # Push artifact to Artifactory
+      - name: Push to Artifactory
+        uses: ./.github/workflows/push-template.yml
         with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          jfrog-url: ${{ secrets.JFROG_URL }}
+          jfrog-user: ${{ secrets.JFROG_USER }}
+          jfrog-apikey: ${{ secrets.JFROG_API_KEY }}
 
-      # Step 4: Build with Maven
-      - name: Build with Maven
-        run: mvn clean install package
-
-      # Step 5: Verify Build Output
-      - name: Verify Build Output
-        run: |
-          echo "Verifying that the JAR file was created..."
-          ls -l target/*.jar || (echo "No JAR file found!" && exit 1)
-
-      # Use SSH action to deploy to EC2 and run commands on EC2
-      - name: SSH into EC2 and configure JFrog CLI
-        uses: appleboy/ssh-action@v0.1.6
+  deploy:
+    needs: build  # Ensure the build job is completed before deployment
+    runs-on: ubuntu-latest
+    steps:
+      # Deploy to EC2
+      - name: Deploy to EC2 and Run Spring Boot Application
+        uses: ./.github/workflows/deploy-template.yml
         with:
-          host: ${{ secrets.EC2_PUBLIC_DNS }}
-          username: ubuntu
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          port: 22
-          script: |
-            # Install JFrog CLI on EC2
-            curl -fL https://getcli.jfrog.io | sh
-            sudo mv jfrog /usr/local/bin
-            # Configure JFrog CLI with your Artifactory credentials
-            jfrog config add my-server \
-              --artifactory-url=${{ secrets.JFROG_URL }} \
-              --user=${{ secrets.JFROG_USER }} \
-              --apikey=${{ secrets.JFROG_API_KEY }} \
-              --interactive=false
-            # Download the artifact directly on EC2
-            jfrog rt download "artifactory-repo/libs-release-local/*.jar" /home/ubuntu/
-            # Run the Spring Boot application
-            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
+          EC2_IP: ${{ secrets.EC2_PUBLIC_DNS }}  # EC2 IP address
+          JFROG_URL: ${{ secrets.JFROG_URL }}
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
+          EC2_SSH_KEY: ${{ secrets.EC2_PRIVATE_KEY }}

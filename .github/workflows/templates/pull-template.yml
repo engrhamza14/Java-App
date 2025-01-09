@@ -1,0 +1,53 @@
+# name: Build and Pull Artifact from Artifactory
+
+# on:
+#   workflow_call:
+#     inputs:
+#       jfrog-url:
+#         required: true
+#         type: string
+#       jfrog-user:
+#         required: true
+#         type: string
+#       jfrog-apikey:
+#         required: true
+#         type: string
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       # Step 1: Checkout code
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       # Step 2: Set up JFrog CLI
+#       - name: Set up JFrog CLI
+#         run: |
+#           curl -fL https://getcli.jfrog.io | sh
+#           sudo mv jfrog /usr/local/bin
+
+#       # Step 3: Configure JFrog CLI
+#       - name: Configure JFrog CLI
+#         run: |
+#           jfrog config add my-server \
+#             --artifactory-url=${{ inputs.jfrog-url }} \
+#             --user=${{ inputs.jfrog-user }} \
+#             --apikey=${{ inputs.jfrog-apikey }} \
+#             --interactive=false
+
+#       # Step 4: Verify JFrog CLI Configuration
+#       - name: Verify JFrog CLI Configuration
+#         run: |
+#           jfrog config show
+
+#       # Step 5: Pull the artifact from Artifactory
+#       - name: Pull Artifact from Artifactory
+#         run: |
+#           jfrog rt download "my-repo/libs-release-local/*.jar" ./downloaded-artifacts/ \
+#             --server-id=my-server
+
+#       # Step 6: Verify Pulled Artifacts
+#       - name: Verify Pulled Artifacts
+#         run: |
+#           echo "Verifying that the JAR file was downloaded..."
+#           ls -l ./downloaded-artifacts/*.jar || (echo "No JAR file found!" && exit 1)
