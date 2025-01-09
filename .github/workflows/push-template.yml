@@ -1,16 +1,6 @@
 name: Build and Deploy to Artifactory
 on:
   workflow_call:
-    inputs:
-      JFROG_URL:
-        required: true
-        type: string
-      JFROG_USER:
-        required: true
-        type: string
-      JFROG-APIKEY:
-        required: true
-        type: string
 jobs:
   build:
     runs-on: ubuntu-latest

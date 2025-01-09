@@ -2,14 +2,6 @@ name: Reusable CI for Spring Boot
 
 on:
   workflow_call: # Makes this workflow reusable
-    inputs:
-      java-version:
-        required: true
-        type: string
-      build-command:
-        required: true
-        type: string
-
 jobs:
   build:
     runs-on: ubuntu-latest
