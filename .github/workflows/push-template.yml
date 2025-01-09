@@ -1,29 +1,48 @@
-name: Build and Deploy to Artifactory
+name: Push Artifacts to Artifactory
+
 on:
   workflow_call:
+    secrets:
+      JFROG_USER:
+        required: true
+      JFROG_URL:
+        required: true
+      JFROG_API_KEY:
+        required: true
+      JFROG_PASSWORD:
+        required: true
+
 jobs:
-  build:
+  push_to_artifactory:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Set up JFrog CLI
         run: |
           curl -fL https://getcli.jfrog.io | sh
           sudo mv jfrog /usr/local/bin
+
       - name: Configure JFrog CLI
         run: |
           jfrog config add my-server \
             --artifactory-url=${{ secrets.JFROG_URL }} \
             --user=${{ secrets.JFROG_USER }} \
-            --apikey=${{ secrets.JFROG-APIKEY }} \
+            --apikey=${{ secrets.JFROG_API_KEY }} \
             --interactive=false
+
       - name: Verify JFrog CLI Configuration
         run: |
           jfrog config show
+
       - name: Build Project
         run: |
           mvn clean install && mvn clean package
+
       - name: Upload Artifacts to Artifactory
         run: |
-          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ --url=http://18.208.222.156:8081/artifactory --user=admin --password=AP617VgComfoQ1PpiNry2zu9Uw
+          jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ \
+            --url=${{ secrets.JFROG_URL }} \
+            --user=${{ secrets.JFROG_USER }} \
+            --password=${{ secrets.JFROG_PASSWORD }}
