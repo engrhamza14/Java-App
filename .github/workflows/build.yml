@@ -39,73 +39,25 @@ jobs:
           echo "Verifying that the JAR file was created..."
           ls -l target/*.jar || (echo "No JAR file found!" && exit 1)
 
-      # Step 6: Set up JFrog CLI
-      - name: Set up JFrog CLI
-        run: |
-          curl -fL https://getcli.jfrog.io | sh
-          sudo mv jfrog /usr/local/bin
-
-      # Step 7: Configure JFrog CLI
-      - name: Configure JFrog CLI
-        env:
-          JFROG_URL: ${{ secrets.JFROG_URL }}
-          JFROG_USER: ${{ secrets.JFROG_USER }}
-          JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
-        run: |
-          jfrog config add my-server \
-            --artifactory-url=$JFROG_URL \
-            --user=$JFROG_USER \
-            --apikey=$JFROG_API_KEY \
-            --interactive=false
-
-      # Step 8: Verify JFrog CLI Configuration
-      - name: Verify JFrog CLI Configuration
-        run: |
-          jfrog config show
-
-      # # Step 9: Upload the build artifact to JFrog Artifactory
-      # - name: Upload Artifacts to Artifactory
-      #   run: |
-      #     jfrog rt upload "target/*.jar" artifactory-repo/libs-release-local/ \
-      #       --server-id=my-server
-
-      # Step 10: Pull the artifact from Artifactory
-      - name: Pull Artifact from Artifactory
-        run: |
-          jfrog rt download "artifactory-repo/libs-release-local/*.jar" ./downloaded-artifacts/ \
-            --server-id=my-server
-
-      # # Step 11: Verify Pulled Artifacts
-      # - name: Verify Pulled Artifacts
-      #   run: |
-      #     echo "Verifying that the JAR file was downloaded..."
-      #     ls -l ./downloaded-artifacts/*.jar || (echo "No JAR file found!" && exit 1)
-
-      # Step 12: SSH into EC2 Instance and Deploy JAR
-      - name: SSH into EC2 and Deploy JAR
-        env:
-          EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-          EC2_PUBLIC_DNS: ${{ secrets.EC2_PUBLIC_DNS }}
-        run: |
-          # Create an SSH key file
-          echo "$EC2_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-
-          # SSH into EC2 and deploy the JAR
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$EC2_PUBLIC_DNS << 'EOF'
-            # Update packages and install Java 11 (if not already installed)
-            sudo apt update -y
-            sudo apt install openjdk-11-jdk -y
-
-            # Create a directory to store the JAR file
-            mkdir -p ~/myapp
-
-            # Copy the JAR file from GitHub Actions to the EC2 instance
-            scp -i private_key.pem ./downloaded-artifacts/*.jar ubuntu@$EC2_PUBLIC_DNS:/home/ubuntu/myapp/
-
-            # Navigate to the app directory
-            cd ~/myapp
-
+      # Use SSH action to deploy to EC2 and run commands on EC2
+      - name: SSH into EC2 and configure JFrog CLI
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Install JFrog CLI on EC2
+            curl -fL https://getcli.jfrog.io | sh
+            sudo mv jfrog /usr/local/bin
+            # Configure JFrog CLI with your Artifactory credentials
+            jfrog config add my-server \
+              --artifactory-url=${{ secrets.JFROG_URL }} \
+              --user=${{ secrets.JFROG_USER }} \
+              --apikey=${{ secrets.JFROG_API_KEY }} \
+              --interactive=false
+            # Download the artifact directly on EC2
+            jfrog rt download "my-repo/libs-release-local/*.jar" /home/ubuntu/
             # Run the Spring Boot application
-            nohup java -jar *.jar > app.log 2>&1 &
-          EOF
+            nohup java -jar /home/ubuntu/springboot-test-0.0.1-SNAPSHOT.jar &
