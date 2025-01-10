@@ -36,3 +36,6 @@ jobs:
     steps:
       - name: Check if Deploy
         run: echo "If you want to deploy, manually trigger 'deploy.yml' workflow."
+
+# GitHub Actions workflows cannot directly prompt for interactive input during execution. Instead, you'll need to simulate user interaction by using a manual step or triggering the deploy.yml workflow separately via the GitHub UI or by passing a specific input value.
+
