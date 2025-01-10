@@ -23,7 +23,7 @@ jobs:
           echo "JFROG_USER: ${{ secrets.JFROG_USER }}"
         shell: bash
 
-      - name: SSH into EC2 and configure JFrog CLI (if not already configured)
+      - name: SSH into EC2 and configure JFrog CLI
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_PUBLIC_DNS }}
@@ -31,31 +31,18 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           port: 22
           script: |
-            echo "SSH connection established. Verifying JFrog CLI configuration..."
-            
-            # Check if JFrog CLI is configured by looking for the config file
-            if [ ! -f ~/.jfrog/jfrog-cli.conf ]; then
-              echo "Installing JFrog CLI..."
-              curl -fL https://getcli.jfrog.io | sh
-              sudo mv jfrog /usr/local/bin
-              echo "Configuring JFrog CLI..."
-              jfrog config add my-server \
-                --artifactory-url=${{ secrets.JFROG_URL }} \
-                --user=${{ secrets.JFROG_USER }} \
-                --apikey=${{ secrets.JFROG_API_KEY }} \
-                --interactive=false
-            else
-              echo "JFrog CLI is already configured."
-            fi
-            
-            # Debugging JFrog CLI Configuration
-            jfrog config show || echo "Failed to show JFrog configuration."
-
+            # Install JFrog CLI on EC2
+            curl -fL https://getcli.jfrog.io | sh
+            sudo mv jfrog /usr/local/bin
+            # Configure JFrog CLI with your Artifactory credentials
+            jfrog config add my-server \
+              --artifactory-url=${{ secrets.JFROG_URL }} \
+              --user=${{ secrets.JFROG_USER }} \
+              --apikey=${{ secrets.JFROG_API_KEY }} \
+              --interactive=false \
+              --overwrite=true
             # Download the artifact directly on EC2
-            echo "Downloading artifact from JFrog..."
-            jfrog rt download "artifactory-repo/libs-release-local/*.jar" /home/ubuntu/ || echo "Artifact download failed"
-            
+            jfrog rt download "artifactory-repo/libs-release-local/*.jar" /home/ubuntu/
             # Run the Spring Boot application
-            echo "Running the Spring Boot application..."
-            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
-            
+            nohup java -jar /home/ubuntu/springboot-test-0.0.1-SNAPSHOT.j
+
