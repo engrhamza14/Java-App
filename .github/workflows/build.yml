@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch: # Allow manual trigger for the build workflow
 
 jobs:
   build:
@@ -28,23 +29,10 @@ jobs:
       JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
       JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
 
-  confirm_deploy:
-    name: Confirm Deployment
+  deploy_decision:
+    name: Deployment Decision
     runs-on: ubuntu-latest
     needs: push_to_artifactory
     steps:
-      - name: Ask for Confirmation
-        id: confirm
-        run: |
-          echo "::set-output name=deploy_confirmation::$(read -p 'Do you want to deploy? (yes/no): ' choice && echo $choice)"
-      - name: Stop if No
-        if: steps.confirm.outputs.deploy_confirmation != 'yes'
-        run: |
-          echo "Deployment not triggered as user chose 'no'."
-          exit 0
-      - name: Trigger Deploy Workflow
-        if: steps.confirm.outputs.deploy_confirmation == 'yes'
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: Main Deploy Workflow
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check if Deploy
+        run: echo "If you want to deploy, manually trigger 'deploy.yml' workflow."
