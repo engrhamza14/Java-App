@@ -1,12 +1,7 @@
 name: Main Deploy Workflow
 
 on:
-  workflow_run:
-    workflows:
-      - Main Build Workflow
-    types:
-      - completed
-  workflow_dispatch: # Allow manual triggering of the deploy workflow
+  workflow_dispatch: # Allows manual triggering of the deploy workflow
 
 jobs:
   deploy:
