@@ -16,7 +16,7 @@ public class SpringbootTestApplication {
 @RestController
 class TestController {
 
-    @GetMapping("/hello")
+    @GetMapping("/")
     public String hello() {
         
         return "Hello, This is my Java Application!";
