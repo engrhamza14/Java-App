@@ -1,4 +1,4 @@
-name: Main Build and Deploy Workflow
+name: Main Build Workflow
 
 on:
   push:
@@ -11,31 +11,19 @@ on:
 jobs:
   build:
     uses: engrhamza14/Java-App/.github/workflows/build-template.yml@main
-    
 
   sonar:
-    needs: build  # Ensure the Build job completes first
+    needs: build
     uses: engrhamza14/Java-App/.github/workflows/sonar-template.yml@main
     secrets:
-     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   push_to_artifactory:
-    needs: [build, sonar]  # Ensure Build and SonarQube jobs complete first
+    needs: [build, sonar]
     uses: engrhamza14/Java-App/.github/workflows/push-template.yml@main
     secrets:
-      JFROG_USER: ${{ secrets.JFROG_USER}}  # Needed to get PR information, if any
+      JFROG_USER: ${{ secrets.JFROG_USER }}
       JFROG_URL: ${{ secrets.JFROG_URL }}
       JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
       JFROG_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
-
-  deploy:
-    needs: push_to_artifactory  # Ensure the Push to Artifactory job completes first
-    uses: engrhamza14/Java-App/.github/workflows/deploy-template.yml@main
-    secrets:
-      JFROG_USER: ${{ secrets.JFROG_USER}}  # Needed to get PR information, if any
-      JFROG_URL: ${{ secrets.JFROG_URL }}
-      JFROG_API_KEY: ${{ secrets.JFROG_API_KEY }}
-      EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-      EC2_PUBLIC_DNS: ${{ secrets.EC2_PUBLIC_DNS }}
-
