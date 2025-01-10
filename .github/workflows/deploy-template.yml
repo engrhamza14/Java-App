@@ -12,6 +12,7 @@ on:
         required: true
       JFROG_API_KEY:
         required: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -43,7 +44,8 @@ jobs:
               --overwrite=true
             # Download the artifact directly on EC2
             jfrog rt download "artifactory-repo/libs-release-local/*.jar" /home/ubuntu/
-            # Run the Spring Boot application
-            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar
+            # Run the Spring Boot application in the background
+            nohup java -jar /home/ubuntu/libs-release-local/springboot-test-0.0.1-SNAPSHOT.jar &
 
-            
+
+
